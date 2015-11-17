@@ -1,9 +1,13 @@
 package com.mario;
 
+import com.mariuszpawlowski.tiktalik.TiktalikJava;
+import com.mariuszpawlowski.tiktalik.TiktalikJavaImpl;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 @SpringBootApplication
 public class DeployerApplication implements CommandLineRunner {
@@ -14,7 +18,9 @@ public class DeployerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... strings) throws Exception {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getForObject("https://www.tiktalik.com/api/v1/computing/instance?api_key=1mlVn8o9lu0rIF/Ygz50KoMN5kbiEYTrZs1hG7BaG4Frg1WRWD+/MRl8TFYfFGkmszf2//C3VTkrB6DoOLNeQg==", Instance.class);
+        TiktalikJava tiktalikJava = new TiktalikJavaImpl("");
+
+
     }
+
 }
