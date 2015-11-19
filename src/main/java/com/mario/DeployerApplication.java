@@ -19,6 +19,9 @@ public class DeployerApplication implements CommandLineRunner {
     @Value("${password}")
     String password;
 
+    @Value("${imageUuid}")
+    String imageUuid;
+
     public static void main(String[] args) {
         SpringApplication.run(DeployerApplication.class, args);
     }
@@ -27,6 +30,10 @@ public class DeployerApplication implements CommandLineRunner {
     public void run(String... strings) throws Exception {
         TiktalikJava tiktalikJava = new TiktalikJavaImpl(login, password);
         List<Instance> instances = tiktalikJava.getListOfInstances();
+
+        // create new instance
+        String hostName = "teamcity";
+        tiktalikJava.createNewInstance(imageUuid, hostName);
 
         System.out.println("done");
 
