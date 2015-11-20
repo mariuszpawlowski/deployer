@@ -22,6 +22,15 @@ public class DeployerApplication implements CommandLineRunner {
     @Value("${imageUuid}")
     String imageUuid;
 
+    @Value("${networkUuid}")
+    String networkUuid;
+
+    @Value("${size}")
+    String instanceSize;
+
+    @Value("${disk_size_gb}")
+    String diskSize;
+
     public static void main(String[] args) {
         SpringApplication.run(DeployerApplication.class, args);
     }
@@ -29,13 +38,11 @@ public class DeployerApplication implements CommandLineRunner {
     @Override
     public void run(String... strings) throws Exception {
         TiktalikJava tiktalikJava = new TiktalikJavaImpl(login, password);
-        List<Instance> instances = tiktalikJava.getListOfInstances();
+        //List<Instance> instances = tiktalikJava.getListOfInstances();
 
         // create new instance
         String hostName = "teamcity";
-        tiktalikJava.createNewInstance(imageUuid, hostName);
-
-        System.out.println("done");
+        tiktalikJava.createNewInstance(hostName, imageUuid, networkUuid, instanceSize, diskSize);
 
     }
 
