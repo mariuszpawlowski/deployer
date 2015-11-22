@@ -39,6 +39,11 @@
 			<artifactId>tiktalik-java</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.mariuszpawlowski.teamcity</groupId>
+			<artifactId>teamcity-java</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	
 	<build>
