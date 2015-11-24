@@ -1,7 +1,9 @@
 package com.mario;
 
 import com.mariuszpawlowski.teamcity.TeamCityJavaImpl;
-import com.mariuszpawlowski.teamcity.entity.Projects;
+import com.mariuszpawlowski.teamcity.entity.build.response.BuildResponse;
+import com.mariuszpawlowski.teamcity.entity.build.response.RunBuildResponse;
+import com.mariuszpawlowski.teamcity.entity.project.ProjectsResponse;
 import com.mariuszpawlowski.tiktalik.TiktalikJava;
 import com.mariuszpawlowski.tiktalik.TiktalikJavaImpl;
 import com.mariuszpawlowski.tiktalik.entity.Instance;
@@ -12,7 +14,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 @SpringBootApplication
 public class DeployerApplication implements CommandLineRunner {
@@ -60,16 +61,18 @@ public class DeployerApplication implements CommandLineRunner {
         boolean teamcityInstanceExists = false;
 
         // create teamcity instance
-        // tiktalikJava.createNewInstance(hostName, imageUuid, networkUuid, instanceSize, diskSize);
+        tiktalikJava.createNewInstance(hostName, imageUuid, networkUuid, instanceSize, diskSize);
 
         String domainName = "";
+        String vpsUuid = "";
         while (!teamcityInstanceExists){
             List<Instance> instances = tiktalikJava.getListOfInstances();
-            teamcityInstanceExists = checkIfTeamCityInstanceExists(instances);
+            teamcityInstanceExists = DeployerUtils.checkIfTeamCityInstanceExists(instances, hostName);
             if (teamcityInstanceExists){
-                domainName = getDomainName(instances, hostName);
+                domainName = DeployerUtils.getDomainName(instances, hostName);
+                vpsUuid = DeployerUtils.getVpsUuid(instances, hostName);
             }
-          //  Thread.sleep(10 * 1000L);
+            Thread.sleep(10 * 1000L);
         }
 
 
@@ -77,16 +80,16 @@ public class DeployerApplication implements CommandLineRunner {
         String teamCityFullHost = "http://" + hostName + ".mario." + domainName + ":8080";
         TeamCityJavaImpl teamcityJava = new TeamCityJavaImpl(loginTeamcity, passwordTeamcity, teamCityFullHost);
 
-        Projects projects = null;
+        ProjectsResponse projectsResponse = null;
         boolean teamCityStarted = false;
         while (!teamCityStarted){
             try {
-                projects = teamcityJava.getProjects();
+                projectsResponse = teamcityJava.getProjects();
             } catch (Exception e){
                 // do nothing, just waiting for TC to start
             } finally {
-               // Thread.sleep(10 * 1000L);
-                if (projects == null){
+                Thread.sleep(10 * 1000L);
+                if (projectsResponse == null){
                     System.out.println("Teamcity is not running");
                 } else {
                     System.out.println("Teamcity is running");
@@ -95,34 +98,38 @@ public class DeployerApplication implements CommandLineRunner {
             }
         }
 
-    // run build configuration
-    teamcityJava.runBuild(buildId);
+        // run build configuration
+        RunBuildResponse runBuildResponse = teamcityJava.runBuild(buildId);
+        String currentBuildId = runBuildResponse.getId();
+        boolean buildFinished = false;
 
-
-    }
-
-    private String getDomainName(List<Instance> instances, String hostName) {
-        String domainName = instances.stream()
-                .filter(i -> i.getHostname().equals(hostName))
-                .findFirst()
-                .get().getInterfaces().get(0).getNetwork().getDomainname();
-        return domainName;
-    }
-
-    private boolean checkIfTeamCityInstanceExists(List<Instance> instances) {
-        boolean teamcityInstanceExists = false;
-        Optional<Instance> instance = instances.stream()
-                .filter(i -> i.getHostname().equals(hostName))
-                .findFirst();
-
-        if (instance.get().getRunning()){
-            teamcityInstanceExists = true;
-            System.out.println("Teamcity server instance is running.");
-        } else {
-            System.out.println("Teamcity server instance is not running.");
+        // check if build finised
+        while (!buildFinished){
+            BuildResponse buildResponse = teamcityJava.getBuild(currentBuildId);
+            if (buildResponse.getState().equals("finished")){
+                buildFinished = true;
+            }
+            System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
         }
 
-        return teamcityInstanceExists;
+        // delete teamcity instance
+        tiktalikJava.deleteInstance(vpsUuid);
+
+        // check if instance deleted
+        teamcityInstanceExists = true;
+        while (teamcityInstanceExists){
+            List<Instance> instances = tiktalikJava.getListOfInstances();
+            teamcityInstanceExists = DeployerUtils.checkIfTeamCityInstanceExists(instances, hostName);
+            if (!teamcityInstanceExists){
+                teamcityInstanceExists = false;
+                System.out.println("Teamcity instance deleted");
+            } else {
+                System.out.println("Teamcity instance not deleted.");
+            }
+            Thread.sleep(10 * 1000L);
+        }
     }
+
+
 
 }
