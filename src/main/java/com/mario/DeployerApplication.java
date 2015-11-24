@@ -13,7 +13,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
-import java.util.Optional;
 
 @SpringBootApplication
 public class DeployerApplication implements CommandLineRunner {
@@ -58,17 +57,17 @@ public class DeployerApplication implements CommandLineRunner {
     public void run(String... strings) throws Exception {
         tiktalikJava = new TiktalikJavaImpl(loginTiktalik, passwordTiktalik);
 
-        boolean teamcityInstanceExists = false;
+        boolean teamcityInstanceIsRunning = false;
 
         // create teamcity instance
         tiktalikJava.createNewInstance(hostName, imageUuid, networkUuid, instanceSize, diskSize);
 
         String domainName = "";
         String vpsUuid = "";
-        while (!teamcityInstanceExists){
+        while (!teamcityInstanceIsRunning){
             List<Instance> instances = tiktalikJava.getListOfInstances();
-            teamcityInstanceExists = DeployerUtils.checkIfTeamCityInstanceExists(instances, hostName);
-            if (teamcityInstanceExists){
+            teamcityInstanceIsRunning = DeployerUtils.checkIfTeamCityInstanceIsRunning(instances, hostName);
+            if (teamcityInstanceIsRunning){
                 domainName = DeployerUtils.getDomainName(instances, hostName);
                 vpsUuid = DeployerUtils.getVpsUuid(instances, hostName);
             }
@@ -103,20 +102,21 @@ public class DeployerApplication implements CommandLineRunner {
         String currentBuildId = runBuildResponse.getId();
         boolean buildFinished = false;
 
-        // check if build finised
+        // check if build finished
         while (!buildFinished){
             BuildResponse buildResponse = teamcityJava.getBuild(currentBuildId);
             if (buildResponse.getState().equals("finished")){
                 buildFinished = true;
             }
             System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
+            Thread.sleep(10 * 1000L);
         }
 
         // delete teamcity instance
         tiktalikJava.deleteInstance(vpsUuid);
 
         // check if instance deleted
-        teamcityInstanceExists = true;
+        boolean teamcityInstanceExists = true;
         while (teamcityInstanceExists){
             List<Instance> instances = tiktalikJava.getListOfInstances();
             teamcityInstanceExists = DeployerUtils.checkIfTeamCityInstanceExists(instances, hostName);
@@ -129,7 +129,5 @@ public class DeployerApplication implements CommandLineRunner {
             Thread.sleep(10 * 1000L);
         }
     }
-
-
 
 }
