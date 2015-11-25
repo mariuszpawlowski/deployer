@@ -4,28 +4,11 @@ import com.mariuszpawlowski.tiktalik.entity.Instance;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.jar.Pack200;
 
 /**
- * Created by Mariusz.Pawlowski on 2015-11-24.
+ * Created by Mariusz.Pawlowski on 2015-11-25.
  */
-public class DeployerUtils {
-
-    public static String getDomainName(List<Instance> instances, String hostName) {
-        String domainName = instances.stream()
-                .filter(i -> i.getHostname().equals(hostName))
-                .findFirst()
-                .get().getInterfaces().get(0).getNetwork().getDomainname();
-        return domainName;
-    }
-
-    public static String getVpsUuid(List<Instance> instances, String hostName) {
-        String vpsUuid = instances.stream()
-                .filter(i -> i.getHostname().equals(hostName))
-                .findFirst()
-                .get().getUuid();
-        return vpsUuid;
-    }
+public class TeamcityUtils {
 
     public static boolean checkIfTeamCityInstanceIsRunning(List<Instance> instances, String hostName) {
         boolean teamcityInstanceIsRunning = false;
