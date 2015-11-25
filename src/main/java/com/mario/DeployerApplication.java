@@ -6,6 +6,7 @@ import com.mariuszpawlowski.teamcity.entity.build.response.RunBuildResponse;
 import com.mariuszpawlowski.teamcity.entity.project.ProjectsResponse;
 import com.mariuszpawlowski.tiktalik.TiktalikJava;
 import com.mariuszpawlowski.tiktalik.TiktalikJavaImpl;
+import com.mariuszpawlowski.tiktalik.entity.Image;
 import com.mariuszpawlowski.tiktalik.entity.Instance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -13,6 +14,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
+
+import static com.mario.TiktalikUtils.getBackupsWithName;
 
 @SpringBootApplication
 public class DeployerApplication implements CommandLineRunner {
@@ -29,8 +32,8 @@ public class DeployerApplication implements CommandLineRunner {
     @Value("${passwordTeamcity}")
     String passwordTeamcity;
 
-    @Value("${imageUuid}")
-    String imageUuid;
+    @Value("${imageName}")
+    String imageName;
 
     @Value("${networkUuid}")
     String networkUuid;
@@ -59,6 +62,14 @@ public class DeployerApplication implements CommandLineRunner {
 
         boolean teamcityInstanceIsRunning = false;
 
+        //get current imageUuid
+        List<Image> images = tiktalikJava.getListOfImages();
+        List<Image> teamcityBackups = getBackupsWithName(imageName, images);
+        String currentImageUuid = "";
+
+
+
+/*
         // create teamcity instance
         tiktalikJava.createNewInstance(hostName, imageUuid, networkUuid, instanceSize, diskSize);
 
@@ -112,6 +123,11 @@ public class DeployerApplication implements CommandLineRunner {
             Thread.sleep(10 * 1000L);
         }
 
+        // stop instance
+
+        //create backup
+        String newImageUuid = "";
+
         // delete teamcity instance
         tiktalikJava.deleteInstance(vpsUuid);
 
@@ -127,7 +143,7 @@ public class DeployerApplication implements CommandLineRunner {
                 System.out.println("Teamcity instance not deleted.");
             }
             Thread.sleep(10 * 1000L);
-        }
+        } */
     }
 
 }
