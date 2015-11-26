@@ -60,27 +60,25 @@ public class DeployerApplication implements CommandLineRunner {
     public void run(String... strings) throws Exception {
         tiktalikJava = new TiktalikJavaImpl(loginTiktalik, passwordTiktalik);
 
-        boolean teamcityInstanceIsRunning = false;
+      /*  boolean teamcityInstanceIsRunning = false;
 
         //get current imageUuid
         List<Image> images = tiktalikJava.getListOfImages();
         List<Image> teamcityBackups = getBackupsWithName(imageName, images);
-        String currentImageUuid = "";
+        String currentImageUuid = teamcityBackups.get(0).getUuid();
 
 
-
-/*
         // create teamcity instance
-        tiktalikJava.createNewInstance(hostName, imageUuid, networkUuid, instanceSize, diskSize);
+        tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
 
         String domainName = "";
         String vpsUuid = "";
         while (!teamcityInstanceIsRunning){
             List<Instance> instances = tiktalikJava.getListOfInstances();
-            teamcityInstanceIsRunning = DeployerUtils.checkIfTeamCityInstanceIsRunning(instances, hostName);
+            teamcityInstanceIsRunning = TeamcityUtils.checkIfTeamCityInstanceIsRunning(instances, hostName);
             if (teamcityInstanceIsRunning){
-                domainName = DeployerUtils.getDomainName(instances, hostName);
-                vpsUuid = DeployerUtils.getVpsUuid(instances, hostName);
+                domainName = TiktalikUtils.getDomainName(instances, hostName);
+                vpsUuid = TiktalikUtils.getVpsUuid(instances, hostName);
             }
             Thread.sleep(10 * 1000L);
         }
@@ -122,20 +120,35 @@ public class DeployerApplication implements CommandLineRunner {
             System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
             Thread.sleep(10 * 1000L);
         }
-
+*/
+        String vpsUuid = "8b599278-8588-4dfd-b815-2b4fd9076bf5";
         // stop instance
+        /*tiktalikJava.stopInstance(vpsUuid);
+
+        boolean isStopped = false;
+        while (!isStopped){
+            Instance instance = tiktalikJava.getInstance(vpsUuid);
+            if (!instance.getRunning()){
+                isStopped = true;
+                System.out.println("Instance is stopped.");
+            } else {
+                System.out.println("Instance is running.");
+            }
+            Thread.sleep(10 * 1000L);
+        }*/
 
         //create backup
         String newImageUuid = "";
 
-        // delete teamcity instance
+
+/*        // delete teamcity instance
         tiktalikJava.deleteInstance(vpsUuid);
 
         // check if instance deleted
         boolean teamcityInstanceExists = true;
         while (teamcityInstanceExists){
             List<Instance> instances = tiktalikJava.getListOfInstances();
-            teamcityInstanceExists = DeployerUtils.checkIfTeamCityInstanceExists(instances, hostName);
+            teamcityInstanceExists = TeamcityUtils.checkIfTeamCityInstanceExists(instances, hostName);
             if (!teamcityInstanceExists){
                 teamcityInstanceExists = false;
                 System.out.println("Teamcity instance deleted");
