@@ -60,7 +60,7 @@ public class DeployerApplication implements CommandLineRunner {
     public void run(String... strings) throws Exception {
         tiktalikJava = new TiktalikJavaImpl(loginTiktalik, passwordTiktalik);
 
-      /*  boolean teamcityInstanceIsRunning = false;
+        boolean teamcityInstanceIsRunning = false;
 
         //get current imageUuid
         List<Image> images = tiktalikJava.getListOfImages();
@@ -120,10 +120,9 @@ public class DeployerApplication implements CommandLineRunner {
             System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
             Thread.sleep(10 * 1000L);
         }
-*/
-        String vpsUuid = "8b599278-8588-4dfd-b815-2b4fd9076bf5";
+
         // stop instance
-        /*tiktalikJava.stopInstance(vpsUuid);
+        tiktalikJava.stopInstance(vpsUuid);
 
         boolean isStopped = false;
         while (!isStopped){
@@ -135,13 +134,29 @@ public class DeployerApplication implements CommandLineRunner {
                 System.out.println("Instance is running.");
             }
             Thread.sleep(10 * 1000L);
-        }*/
+        }
 
         //create backup
-        String newImageUuid = "";
+        tiktalikJava.createBackup(vpsUuid);
 
+        Instance instance = tiktalikJava.getInstance(vpsUuid);
 
-/*        // delete teamcity instance
+        boolean duringAction = true;
+        while (duringAction){
+            if (!instance.getActionsPendingCount().equals("0")){
+                System.out.println("Instance during action");
+            } else {
+                System.out.println("Instance action finished");
+                duringAction = false;
+            }
+            Thread.sleep(10 * 1000L);
+        }
+
+        //delete old image
+        String image = "87038636-9df3-40e7-ac8b-0fcee30dd9ed";
+        tiktalikJava.deleteImage(image);
+
+        // delete teamcity instance
         tiktalikJava.deleteInstance(vpsUuid);
 
         // check if instance deleted
@@ -156,7 +171,7 @@ public class DeployerApplication implements CommandLineRunner {
                 System.out.println("Teamcity instance not deleted.");
             }
             Thread.sleep(10 * 1000L);
-        } */
+        }
     }
 
 }
