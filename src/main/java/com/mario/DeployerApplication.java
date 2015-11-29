@@ -63,9 +63,7 @@ public class DeployerApplication implements CommandLineRunner {
         boolean teamcityInstanceIsRunning = false;
 
         //get current imageUuid
-        List<Image> images = tiktalikJava.getListOfImages();
-        List<Image> teamcityBackups = getBackupsWithName(imageName, images);
-        String currentImageUuid = teamcityBackups.get(0).getUuid();
+        String currentImageUuid = getImageUuid();
 
 
         // create teamcity instance
@@ -139,10 +137,9 @@ public class DeployerApplication implements CommandLineRunner {
         //create backup
         tiktalikJava.createBackup(vpsUuid);
 
-        Instance instance = tiktalikJava.getInstance(vpsUuid);
-
         boolean duringAction = true;
         while (duringAction){
+            Instance instance = tiktalikJava.getInstance(vpsUuid);
             if (!instance.getActionsPendingCount().equals("0")){
                 System.out.println("Instance during action");
             } else {
@@ -153,8 +150,7 @@ public class DeployerApplication implements CommandLineRunner {
         }
 
         //delete old image
-        String image = "87038636-9df3-40e7-ac8b-0fcee30dd9ed";
-        tiktalikJava.deleteImage(image);
+        tiktalikJava.deleteImage(currentImageUuid);
 
         // delete teamcity instance
         tiktalikJava.deleteInstance(vpsUuid);
@@ -172,6 +168,12 @@ public class DeployerApplication implements CommandLineRunner {
             }
             Thread.sleep(10 * 1000L);
         }
+    }
+
+    private String getImageUuid() {
+        List<Image> images = tiktalikJava.getListOfImages();
+        List<Image> teamcityBackups = getBackupsWithName(imageName, images);
+        return teamcityBackups.get(0).getUuid();
     }
 
 }
