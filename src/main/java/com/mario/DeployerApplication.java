@@ -51,6 +51,7 @@ public class DeployerApplication implements CommandLineRunner {
     String buildId;
 
     private TiktalikJava tiktalikJava;
+    private TeamCityJavaImpl teamcityJava;
 
     public static void main(String[] args) {
         SpringApplication.run(DeployerApplication.class, args);
@@ -64,7 +65,6 @@ public class DeployerApplication implements CommandLineRunner {
 
         //get current imageUuid
         String currentImageUuid = getImageUuid();
-
 
         // create teamcity instance
         tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
@@ -84,8 +84,90 @@ public class DeployerApplication implements CommandLineRunner {
 
         // check if teamcity is running
         String teamCityFullHost = "http://" + hostName + ".mario." + domainName + ":8080";
-        TeamCityJavaImpl teamcityJava = new TeamCityJavaImpl(loginTeamcity, passwordTeamcity, teamCityFullHost);
+        teamcityJava = new TeamCityJavaImpl(loginTeamcity, passwordTeamcity, teamCityFullHost);
 
+        checkIfTeamcityIsRunning();
+
+        // run build configuration
+        RunBuildResponse runBuildResponse = teamcityJava.runBuild(buildId);
+        String currentBuildId = runBuildResponse.getId();
+        checkIfBuildFinished(currentBuildId);
+
+        // stop instance
+        tiktalikJava.stopInstance(vpsUuid);
+        checkIfInstanceStopped(vpsUuid);
+
+        //create backup
+        tiktalikJava.createBackup(vpsUuid);
+        checkIfDuringAction(vpsUuid);
+
+        //delete old image
+        tiktalikJava.deleteImage(currentImageUuid);
+
+        // delete teamcity instance
+        tiktalikJava.deleteInstance(vpsUuid);
+
+        // check if instance deleted
+        checkIfInstanceExists();
+    }
+
+    private void checkIfInstanceExists() throws InterruptedException {
+        boolean teamcityInstanceExists = true;
+        while (teamcityInstanceExists){
+            List<Instance> instances = tiktalikJava.getListOfInstances();
+            teamcityInstanceExists = TeamcityUtils.checkIfTeamCityInstanceExists(instances, hostName);
+            if (!teamcityInstanceExists){
+                teamcityInstanceExists = false;
+                System.out.println("Teamcity instance deleted");
+            } else {
+                System.out.println("Teamcity instance not deleted.");
+            }
+            Thread.sleep(10 * 1000L);
+        }
+    }
+
+    private void checkIfDuringAction(String vpsUuid) throws InterruptedException {
+        boolean duringAction = true;
+        while (duringAction){
+            Instance instance = tiktalikJava.getInstance(vpsUuid);
+            if (!instance.getActionsPendingCount().equals("0")){
+                System.out.println("Instance during action");
+            } else {
+                System.out.println("Instance action finished");
+                duringAction = false;
+            }
+            Thread.sleep(10 * 1000L);
+        }
+    }
+
+    private void checkIfInstanceStopped(String vpsUuid) throws InterruptedException {
+        boolean isStopped = false;
+        while (!isStopped){
+            Instance instance = tiktalikJava.getInstance(vpsUuid);
+            if (!instance.getRunning()){
+                isStopped = true;
+                System.out.println("Instance is stopped.");
+            } else {
+                System.out.println("Instance is running.");
+            }
+            Thread.sleep(10 * 1000L);
+        }
+    }
+
+    private void checkIfBuildFinished(String currentBuildId) throws InterruptedException {
+        boolean buildFinished = false;
+        // check if build finished
+        while (!buildFinished){
+            BuildResponse buildResponse = teamcityJava.getBuild(currentBuildId);
+            if (buildResponse.getState().equals("finished")){
+                buildFinished = true;
+            }
+            System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
+            Thread.sleep(10 * 1000L);
+        }
+    }
+
+    private void checkIfTeamcityIsRunning() throws InterruptedException {
         ProjectsResponse projectsResponse = null;
         boolean teamCityStarted = false;
         while (!teamCityStarted){
@@ -102,71 +184,6 @@ public class DeployerApplication implements CommandLineRunner {
                     teamCityStarted = true;
                 }
             }
-        }
-
-        // run build configuration
-        RunBuildResponse runBuildResponse = teamcityJava.runBuild(buildId);
-        String currentBuildId = runBuildResponse.getId();
-        boolean buildFinished = false;
-
-        // check if build finished
-        while (!buildFinished){
-            BuildResponse buildResponse = teamcityJava.getBuild(currentBuildId);
-            if (buildResponse.getState().equals("finished")){
-                buildFinished = true;
-            }
-            System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
-            Thread.sleep(10 * 1000L);
-        }
-
-        // stop instance
-        tiktalikJava.stopInstance(vpsUuid);
-
-        boolean isStopped = false;
-        while (!isStopped){
-            Instance instance = tiktalikJava.getInstance(vpsUuid);
-            if (!instance.getRunning()){
-                isStopped = true;
-                System.out.println("Instance is stopped.");
-            } else {
-                System.out.println("Instance is running.");
-            }
-            Thread.sleep(10 * 1000L);
-        }
-
-        //create backup
-        tiktalikJava.createBackup(vpsUuid);
-
-        boolean duringAction = true;
-        while (duringAction){
-            Instance instance = tiktalikJava.getInstance(vpsUuid);
-            if (!instance.getActionsPendingCount().equals("0")){
-                System.out.println("Instance during action");
-            } else {
-                System.out.println("Instance action finished");
-                duringAction = false;
-            }
-            Thread.sleep(10 * 1000L);
-        }
-
-        //delete old image
-        tiktalikJava.deleteImage(currentImageUuid);
-
-        // delete teamcity instance
-        tiktalikJava.deleteInstance(vpsUuid);
-
-        // check if instance deleted
-        boolean teamcityInstanceExists = true;
-        while (teamcityInstanceExists){
-            List<Instance> instances = tiktalikJava.getListOfInstances();
-            teamcityInstanceExists = TeamcityUtils.checkIfTeamCityInstanceExists(instances, hostName);
-            if (!teamcityInstanceExists){
-                teamcityInstanceExists = false;
-                System.out.println("Teamcity instance deleted");
-            } else {
-                System.out.println("Teamcity instance not deleted.");
-            }
-            Thread.sleep(10 * 1000L);
         }
     }
 
