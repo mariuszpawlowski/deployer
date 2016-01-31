@@ -67,15 +67,15 @@ public class DeployerApplication implements CommandLineRunner {
         String currentImageUuid = getImageUuid();
 
         // create teamcity instance
-        tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
+//        tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
 
-        String domainName = "";
+        String ip = "";
         String vpsUuid = "";
         while (!teamcityInstanceIsRunning){
             List<Instance> instances = tiktalikJava.getListOfInstances();
             teamcityInstanceIsRunning = TeamcityUtils.checkIfTeamCityInstanceIsRunning(instances, hostName);
             if (teamcityInstanceIsRunning){
-                domainName = TiktalikUtils.getDomainName(instances, hostName);
+                ip = TiktalikUtils.getIp(instances, hostName);
                 vpsUuid = TiktalikUtils.getVpsUuid(instances, hostName);
             }
             Thread.sleep(10 * 1000L);
@@ -83,7 +83,9 @@ public class DeployerApplication implements CommandLineRunner {
 
 
         // check if teamcity is running
-        String teamCityFullHost = "http://" + hostName + ".mario." + domainName + ":8080";
+        String teamCityFullHost = "http://" + ip + ":8080";
+
+
         teamcityJava = new TeamCityJavaImpl(loginTeamcity, passwordTeamcity, teamCityFullHost);
 
         checkIfTeamcityIsRunning();

@@ -21,6 +21,14 @@ public class TiktalikUtils {
         return domainName;
     }
 
+    public static String getIp(List<Instance> instances, String hostName) {
+        String ip = instances.stream()
+                .filter(i -> i.getHostname().equals(hostName))
+                .findFirst()
+                .get().getInterfaces().get(0).getIp();
+        return ip;
+    }
+
     public static String getVpsUuid(List<Instance> instances, String hostName) {
         String vpsUuid = instances.stream()
                 .filter(i -> i.getHostname().equals(hostName))
