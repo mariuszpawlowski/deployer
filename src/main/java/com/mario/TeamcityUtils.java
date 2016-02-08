@@ -1,6 +1,7 @@
 package com.mario;
 
 import com.mariuszpawlowski.tiktalik.entity.Instance;
+import org.apache.log4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +10,8 @@ import java.util.Optional;
  * Created by Mariusz.Pawlowski on 2015-11-25.
  */
 public class TeamcityUtils {
+
+    private static Logger log = Logger.getLogger(TeamcityUtils.class);
 
     public static boolean checkIfTeamCityInstanceIsRunning(List<Instance> instances, String hostName) {
         boolean teamcityInstanceIsRunning = false;
@@ -19,12 +22,12 @@ public class TeamcityUtils {
         if (instance.isPresent()){
             if (instance.get().getRunning()){
                 teamcityInstanceIsRunning = true;
-                System.out.println("Teamcity server instance is running.");
+                log.info("Teamcity server instance is running.");
             } else {
-                System.out.println("Teamcity server instance is not running.");
+                log.warn("Teamcity server instance is not running.");
             }
         } else {
-            System.out.println("Teamcity server instance does not exist.");
+            log.error("Teamcity server instance does not exist.");
         }
 
         return teamcityInstanceIsRunning;
@@ -37,10 +40,10 @@ public class TeamcityUtils {
                 .findFirst();
 
         if (instance.isPresent()){
-            System.out.println("Teamcity server instance exists.");
+            log.info("Teamcity server instance exists.");
             teamcityInstanceExists = true;
         } else {
-            System.out.println("Teamcity server instance does not exist.");
+            log.warn("Teamcity server instance does not exist.");
         }
 
         return teamcityInstanceExists;

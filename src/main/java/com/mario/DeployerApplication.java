@@ -8,6 +8,8 @@ import com.mariuszpawlowski.tiktalik.TiktalikJava;
 import com.mariuszpawlowski.tiktalik.TiktalikJavaImpl;
 import com.mariuszpawlowski.tiktalik.entity.Image;
 import com.mariuszpawlowski.tiktalik.entity.Instance;
+import org.apache.commons.logging.Log;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -53,12 +55,16 @@ public class DeployerApplication implements CommandLineRunner {
     private TiktalikJava tiktalikJava;
     private TeamCityJavaImpl teamcityJava;
 
+    private Logger log = Logger.getLogger(DeployerApplication.class);
+
     public static void main(String[] args) {
         SpringApplication.run(DeployerApplication.class, args);
     }
 
     @Override
     public void run(String... strings) throws Exception {
+        log.info("Deployer started.");
+
         tiktalikJava = new TiktalikJavaImpl(loginTiktalik, passwordTiktalik);
 
         boolean teamcityInstanceIsRunning = false;
@@ -67,7 +73,7 @@ public class DeployerApplication implements CommandLineRunner {
         String currentImageUuid = getImageUuid();
 
         // create teamcity instance
-        tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
+        //tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
 
         String ip = "";
         String vpsUuid = "";
@@ -111,6 +117,8 @@ public class DeployerApplication implements CommandLineRunner {
 
         // check if instance deleted
         checkIfInstanceExists();
+
+        log.info("Deployer finished.");
     }
 
     private void checkIfInstanceExists() throws InterruptedException {
@@ -120,9 +128,9 @@ public class DeployerApplication implements CommandLineRunner {
             teamcityInstanceExists = TeamcityUtils.checkIfTeamCityInstanceExists(instances, hostName);
             if (!teamcityInstanceExists){
                 teamcityInstanceExists = false;
-                System.out.println("Teamcity instance deleted");
+                log.info("Teamcity instance deleted.");
             } else {
-                System.out.println("Teamcity instance not deleted.");
+                log.info("Teamcity instance not deleted.");
             }
             Thread.sleep(10 * 1000L);
         }
@@ -133,9 +141,9 @@ public class DeployerApplication implements CommandLineRunner {
         while (duringAction){
             Instance instance = tiktalikJava.getInstance(vpsUuid);
             if (!instance.getActionsPendingCount().equals("0")){
-                System.out.println("Instance during action");
+                log.info("Instance during action.");
             } else {
-                System.out.println("Instance action finished");
+                log.info("Instance action finished.");
                 duringAction = false;
             }
             Thread.sleep(10 * 1000L);
@@ -148,9 +156,9 @@ public class DeployerApplication implements CommandLineRunner {
             Instance instance = tiktalikJava.getInstance(vpsUuid);
             if (!instance.getRunning()){
                 isStopped = true;
-                System.out.println("Instance is stopped.");
+                log.info("Instance is stopped.");
             } else {
-                System.out.println("Instance is running.");
+                log.info("Instance is running.");
             }
             Thread.sleep(10 * 1000L);
         }
@@ -164,7 +172,7 @@ public class DeployerApplication implements CommandLineRunner {
             if (buildResponse.getState().equals("finished")){
                 buildFinished = true;
             }
-            System.out.println("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
+            log.info("Build number: " + buildResponse.getNumber() +", Build state: " + buildResponse.getState() + " , Build status: " + buildResponse.getStatus());
             Thread.sleep(10 * 1000L);
         }
     }
@@ -180,9 +188,9 @@ public class DeployerApplication implements CommandLineRunner {
             } finally {
                 Thread.sleep(10 * 1000L);
                 if (projectsResponse == null){
-                    System.out.println("Teamcity is not running");
+                    log.warn("Teamcity is not running.");
                 } else {
-                    System.out.println("Teamcity is running");
+                    log.info("Teamcity is running.");
                     teamCityStarted = true;
                 }
             }
@@ -194,5 +202,4 @@ public class DeployerApplication implements CommandLineRunner {
         List<Image> teamcityBackups = getBackupsWithName(imageName, images);
         return teamcityBackups.get(0).getUuid();
     }
-
 }
