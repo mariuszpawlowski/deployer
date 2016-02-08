@@ -67,7 +67,7 @@ public class DeployerApplication implements CommandLineRunner {
         String currentImageUuid = getImageUuid();
 
         // create teamcity instance
-//        tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
+        tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
 
         String ip = "";
         String vpsUuid = "";
