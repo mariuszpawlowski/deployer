@@ -1,4 +1,4 @@
-package com.mario;
+package pl.mariuszpawlowski.deployer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
