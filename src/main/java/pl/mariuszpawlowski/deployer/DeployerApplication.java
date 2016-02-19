@@ -15,6 +15,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
+import java.util.concurrent.*;
 
 @SpringBootApplication
 public class DeployerApplication implements CommandLineRunner {
@@ -61,13 +62,28 @@ public class DeployerApplication implements CommandLineRunner {
     @Override
     public void run(String... strings) throws Exception {
         log.info("Deployer started.");
-
+        String currentImageUuid;
         tiktalikJava = new TiktalikJavaImpl(loginTiktalik, passwordTiktalik);
+
+        GetImageUuidTask getImageUuidTask = new GetImageUuidTask(tiktalikJava, imageName);
 
         boolean teamcityInstanceIsRunning = false;
 
         //get current imageUuid
-        String currentImageUuid = getImageUuid();
+        //String currentImageUuid = getImageUuid();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<String> future = executor.submit(getImageUuidTask);
+
+        try {
+            currentImageUuid = future.get(2, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            System.out.println("Timed out");
+        }
+
+        executor.shutdownNow();
+
+
 
         // create teamcity instance
         //tiktalikJava.createNewInstance(hostName, currentImageUuid, networkUuid, instanceSize, diskSize);
@@ -194,9 +210,5 @@ public class DeployerApplication implements CommandLineRunner {
         }
     }
 
-    private String getImageUuid() {
-        List<Image> images = tiktalikJava.getListOfImages();
-        List<Image> teamcityBackups = TiktalikUtils.getBackupsWithName(imageName, images);
-        return teamcityBackups.get(0).getUuid();
-    }
+
 }
